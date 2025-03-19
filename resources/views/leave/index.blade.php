@@ -2,7 +2,7 @@
 
 @section('content')
 
-@if($annual_limit)
+@if(Auth::user()->biodata == "true")
 <div class="container-fluid py-4">
     <div class="col-md-12 d-flex justify-content-evenly">
         <div class="col-md-4 border rounded p-2 m-1">
@@ -38,7 +38,7 @@
                 <p class="fs-5">{{$row->name}}</p>
                 <div class="">
                     @if($row->status == "approve")
-                    <p class="bg-success rounded h6 px-1 text-white">{{$row->status}}</p>
+                    <p class="bg-success rounded h6 px-1 text-white">{{$row->status}}d</p>
                     @elseif($row->status == "pending")
                     <p class="bg-warning rounded h6 px-1 text-white">{{$row->status}}</p>
                     @else
@@ -90,7 +90,7 @@
 @endif
 
 <!-- Untuk approve cuti -->
-@if(Auth::user()->level != 'staff')
+@if(Auth::user()->level != 'staff' && Auth::user()->level != 'administration')
 <div class="container-fluid py-4">
     <div class="col-md-12 d-flex justify-content-between row">
         <div class="col-md-12 d-flex justify-content-between">
@@ -102,11 +102,9 @@
             <p class="h3 d-flex">
                 All staff leave request
             </p>
-            <form action="{{url('/leave/deleteAll')}}" method="post">
-                @csrf
-                <input name="_method" type="hidden" value="DELETE">
-                <button class="btn btn-danger btn-sm remove-data">reset all</button>
-            </form>
+            @csrf
+            <!-- <button class="btn btn-danger btn-sm remove-data">reset all</button> -->
+            <a href="/leave/history" class="btn btn-warning btn-sm">Leave History</a>
             @endif
         </div>
 
@@ -121,11 +119,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if(Auth::user()->level == 'manager')
+                @if(Auth::user()->level == 'manager')
                     @foreach($manager as $row)
-                    @if($row->status == "pending" && $row->id_luser != Auth::user()->id)
+                    @if($row->status == "pending" && $row->user->level != "manager" && $row->user->level != "supervisor" && $row->user->level != "admin")
                     <tr>
-                        <td>{{$row->user->name}}</td>
+                        <td>{{$row->user->name}} ({{$row->user->level}})</td>
                         <td>{{$row->name}}</td>
                         <td>
                             <p>
@@ -146,6 +144,7 @@
                                 {{method_field('PUT')}}
                                 <input type="text" name="status" value="approve" hidden>
 
+                                @if($row->name != 'Izin' && $row->name != 'Sakit')
                                 <input type="text" name="total_leave" value="
                                     @php
                                     $date1=date_create($row->start_leave);
@@ -154,6 +153,7 @@
                                     echo intval($diff + 1);
                                     @endphp
                                 " hidden>
+                                @endif
                                 <button class="btn btn-success btn-sm m-1">Approve</button>
                             </form>
                             <form action="{{route('leave.update', $row->id)}}" method="post">
@@ -164,16 +164,14 @@
                             </form>
                         </td>
                     </tr>
-
                     @endif
-                    @endforeach
 
+                    @endforeach
                     @elseif(Auth::user()->level == 'supervisor')
                     @foreach($supervisor as $row)
-                    @if($row->status == "pending" && $row->id_luser != Auth::user()->id && $row->id_luser !=
-                    $row->id_manager)
+                    @if($row->status == "pending" && $row->user->level != "manager" && $row->user->level != "supervisor" && $row->user->level != "admin")
                     <tr>
-                        <td>{{$row->user->name}}</td>
+                        <td>{{$row->user->name}} ({{$row->user->level}})</td>
                         <td>{{$row->name}}</td>
                         <td>
                             <p>
@@ -194,6 +192,7 @@
                                 {{method_field('PUT')}}
                                 <input type="text" name="status" value="approve" hidden>
 
+                                @if($row->name != 'Izin' && $row->name != 'Sakit')
                                 <input type="text" name="total_leave" value="
                                     @php
                                     $date1=date_create($row->start_leave);
@@ -202,6 +201,7 @@
                                     echo intval($diff + 1);
                                     @endphp
                                 " hidden>
+                                @endif
                                 <button class="btn btn-success btn-sm m-1">Approve</button>
                             </form>
                             <form action="{{route('leave.update', $row->id)}}" method="post">
@@ -217,9 +217,9 @@
 
                     @elseif(Auth::user()->level == 'admin')
                     @foreach($admin as $row)
-                    @if($row->status == "pending")
+                    @if($row->status == "pending" && $row->id_luser != Auth::User()->id)
                     <tr>
-                        <td>{{$row->user->name}}</td>
+                        <td>{{$row->user->name}} ({{$row->user->level}})</td>
                         <td>{{$row->name}}</td>
                         <td>
                             <p>
@@ -240,6 +240,7 @@
                                 {{method_field('PUT')}}
                                 <input type="text" name="status" value="approve" hidden>
 
+                                @if($row->name != 'Izin' && $row->name != 'Sakit')
                                 <input type="text" name="total_leave" value="
                                     @php
                                     $date1=date_create($row->start_leave);
@@ -248,6 +249,7 @@
                                     echo intval($diff + 1);
                                     @endphp
                                 " hidden>
+                                @endif
                                 <button class="btn btn-success btn-sm m-1">Approve</button>
                             </form>
                             <form action="{{route('leave.update', $row->id)}}" method="post">
